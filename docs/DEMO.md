@@ -41,10 +41,11 @@ Create an empty GitHub repository, then add its URL as the local remote:
 git status
 git add .
 git commit -m "Initial YtDownloader application"
-git remote add origin https://github.com/YOUR-USERNAME/YtDownloader.git
+git remote add origin https://github.com/ehsan-nojaba/Youtube-Downloader-.git
 git push -u origin main
 ```
 
-Replace the URL with your repository's actual URL. The repository's ignore rules
+The remote is already configured locally; skip `git remote add` if `origin` exists.
+The repository's ignore rules
 exclude build output, local settings, SQLite data, downloaded media, FFmpeg binaries,
 and preview files.
