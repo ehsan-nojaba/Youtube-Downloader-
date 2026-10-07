@@ -1,0 +1,27 @@
+.app-shell { min-height: 100vh; display: flex; flex-direction: column; }
+.app-header { display: flex; align-items: center; gap: 2rem; max-width: 1220px; width: 100%; margin: auto; padding: 28px 40px; }
+.brand { display: flex; gap: 12px; align-items: center; color: var(--ink); text-decoration: none; font-weight: 760; font-size: 21px; letter-spacing: -.8px; }
+.brand-mark { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 13px; color: white; background: var(--accent); }
+.brand-mark svg { width: 25px; height: 25px; }
+.brand-accent { color: var(--accent); }
+.brand small { display: block; font-size: 8px; letter-spacing: 2.1px; margin-top: 3px; color: var(--muted); font-weight: 650; }
+.header-nav { display: flex; gap: 26px; margin-left: auto; }
+.header-nav a { color: var(--muted); text-decoration: none; font-size: 13px; font-weight: 650; }
+.header-nav a:hover { color: var(--accent); }
+.header-note { border-left: 1px solid var(--line); padding-left: 26px; color: var(--ink); font-size: 11px; font-weight: 700; letter-spacing: 1px; }
+.header-note span { color: #aaa; padding: 0 7px; }
+.app-main { max-width: 1120px; width: calc(100% - 80px); margin: 0 auto; flex: 1; }
+.app-footer { max-width: 1120px; width: calc(100% - 80px); margin: 36px auto 0; border-top: 1px solid var(--line); padding: 24px 0; display: flex; justify-content: space-between; gap: 16px; font-size: 11px; color: var(--muted); }
+.skip-link { position: absolute; top: -100px; left: 20px; background: white; padding: 12px; z-index: 100; }
+.skip-link:focus { top: 12px; }
+#blazor-error-ui { display: none; position: fixed; bottom: 0; width: 100%; z-index: 1000; background: #fff0e9; border-top: 1px solid #e1ad8c; padding: 18px 30px; color: #7b3219; }
+#blazor-error-ui a { margin-left: 15px; }
+#blazor-error-ui .dismiss { float: right; border: 0; background: transparent; color: inherit; font-size: 20px; }
+@media (max-width: 640px) {
+    .app-header { padding: 22px 20px; gap: 15px; flex-wrap: wrap; }
+    .brand { font-size: 18px; }
+    .header-nav { gap: 16px; }
+    .header-note { display: none; }
+    .app-main, .app-footer { width: calc(100% - 40px); }
+    .app-footer { flex-direction: column; }
+}

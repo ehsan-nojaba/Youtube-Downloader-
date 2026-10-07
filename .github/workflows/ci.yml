@@ -1,0 +1,31 @@
+name: Build and test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Restore
+        run: dotnet restore YtDownloader.sln
+      - name: Build
+        run: dotnet build YtDownloader.sln --configuration Release --no-restore
+      - name: Test
+        run: dotnet test YtDownloader.sln --configuration Release --no-build
+      - name: Browser storage tests
+        run: node --test tests/YtDownloader.Web.Tests/jobHistory.test.mjs

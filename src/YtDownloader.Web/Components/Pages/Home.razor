@@ -1,0 +1,167 @@
+@page "/"
+@rendermode InteractiveServer
+@implements IAsyncDisposable
+@inject YtDownloader.Web.Services.DownloadSession Session
+
+<PageTitle>YtDownloader · Personal media studio</PageTitle>
+
+<section class="studio-hero">
+    <div>
+        <p class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span> LESS FRICTION. MORE PLAY.</p>
+        <h1>Your videos.<br /><span>Your format.</span></h1>
+        <p class="hero-description">Turn a YouTube link into a video or audio file.<br class="desktop-break" /> Pick your quality. We'll take care of the rest.</p>
+    </div>
+    <div class="hero-workflow" aria-label="How it works">
+        <div><span>01</span><p>Add a link<small>Find something worth saving</small></p></div>
+        <div><span>02</span><p>Make it yours<small>Choose MP4 or MP3 and a quality</small></p></div>
+        <div><span>03</span><p>Take it with you<small>Save your file when it's ready</small></p></div>
+    </div>
+</section>
+
+<section id="converter" class="surface link-card" aria-labelledby="link-title">
+    <div class="section-heading">
+        <div><p class="eyebrow">START HERE</p><h2 id="link-title">What would you like to save?</h2></div>
+        <span class="subtle-pill">Up to 2 hours</span>
+    </div>
+    <form @onsubmit="LoadAsync" @onsubmit:preventDefault>
+        <label for="video-url" class="field-label">YouTube video link</label>
+        <div class="url-entry">
+            <span class="link-symbol" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none"><path d="m9 15 6-6m-6-2 2-2a4.2 4.2 0 0 1 6 6l-2 2m-6-2-2 2a4.2 4.2 0 0 0 6 6l2-2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg>
+            </span>
+            <input id="video-url" type="url" required placeholder="https://www.youtube.com/watch?v=…"
+                   @bind="Session.Url" disabled="@(Session.Busy || Session.IsActive)" autocomplete="off" aria-describedby="url-help" />
+            <button type="submit" class="action-button" disabled="@(Session.Busy || Session.IsActive)"
+                    aria-busy="@Session.LoadingVideo.ToString().ToLowerInvariant()">
+                @if (Session.LoadingVideo)
+                {
+                    <span class="spinner-border spinner-border-sm" aria-hidden="true"></span><span role="status">Loading video…</span>
+                }
+                else { <span>Load video</span><span aria-hidden="true">→</span> }
+            </button>
+        </div>
+        <p id="url-help" class="field-hint">YouTube, YouTube Shorts &amp; YouTube Music · One video at a time</p>
+    </form>
+    @if (Session.Error is { } error)
+    {
+        <div class="notice notice-error" role="alert"><span aria-hidden="true">!</span><div><strong>We couldn't finish that step</strong><p>@error</p></div></div>
+    }
+</section>
+
+@if (Session.Video is { } video)
+{
+    <section class="surface video-card" aria-labelledby="video-title">
+        <div class="video-art">
+            @if (!string.IsNullOrWhiteSpace(video.ThumbnailUrl))
+            {
+                <img src="@video.ThumbnailUrl" alt="Thumbnail for @video.Title" />
+            }
+            else { <div class="thumbnail-placeholder">VIDEO PREVIEW</div> }
+            <span class="duration-chip">@video.Duration.ToString(@"hh\:mm\:ss")</span>
+        </div>
+        <div class="video-details">
+            <p class="eyebrow">MAKE IT YOURS</p>
+            <h2 id="video-title">@video.Title</h2>
+            <p class="video-author">@video.Author</p>
+            <span class="field-label" id="format-label">Choose your format</span>
+            <div class="format-picker" role="group" aria-labelledby="format-label">
+                <button type="button" class="format-option @(Session.Format == "Mp4" ? "selected" : "")" @onclick="SelectMp4"
+                        disabled="@(Session.Busy || Session.IsActive)" aria-pressed="@(Session.Format == "Mp4")">
+                    <strong>MP4</strong><span>Video + audio</span>
+                </button>
+                <button type="button" class="format-option @(Session.Format == "Mp3" ? "selected" : "")" @onclick="SelectMp3"
+                        disabled="@(Session.Busy || Session.IsActive)" aria-pressed="@(Session.Format == "Mp3")">
+                    <strong>MP3</strong><span>Just the audio</span>
+                </button>
+            </div>
+            <span class="field-label" id="quality-label">Choose your quality</span>
+            <div class="quality-picker" role="group" aria-labelledby="quality-label">
+                @foreach (var quality in Session.Qualities)
+                {
+                    <button type="button" class="quality-option @(Session.Quality == quality.Label ? "selected" : "")"
+                            aria-pressed="@(Session.Quality == quality.Label)" @onclick="() => Session.Quality = quality.Label"
+                            disabled="@(Session.Busy || Session.IsActive)">@quality.Label</button>
+                }
+            </div>
+            @if (Session.Qualities.Length == 0) { <p class="field-hint">No qualities are available for this format.</p> }
+            <button type="button" class="action-button download-button" @onclick="StartAsync"
+                    disabled="@(Session.Busy || Session.IsActive || Session.Qualities.Length == 0)">
+                @if (Session.Busy && !Session.LoadingVideo) { <span class="spinner-border spinner-border-sm" aria-hidden="true"></span><span>Starting download…</span> }
+                else { <span>Convert to @Session.Format.ToUpperInvariant()</span><span aria-hidden="true">↓</span> }
+            </button>
+            <p class="field-hint">Files are temporary. Save yours when it's ready.</p>
+        </div>
+    </section>
+}
+
+@if (Session.Job is { } job)
+{
+    <section class="surface progress-card" aria-live="polite" aria-label="Current download">
+        <div class="progress-heading">
+            <div><p class="eyebrow">YOUR DOWNLOAD</p><h2>@job.Status</h2></div>
+            <span class="progress-number">@job.ProgressPercent<span>%</span></span>
+        </div>
+        <progress max="100" value="@job.ProgressPercent" aria-label="Download progress"></progress>
+        <div class="progress-footer">
+            @if (Session.UsesPolling) { <span>Connection interrupted. Checking your progress periodically.</span> }
+            else if (Session.IsActive) { <span><span class="live-dot" aria-hidden="true"></span> Live progress updates</span> }
+            else { <span>@job.Status</span> }
+            @if (Session.DownloadUrl is { } downloadUrl) { <a class="action-button" href="@downloadUrl">Save your file <span aria-hidden="true">↓</span></a> }
+        </div>
+    </section>
+}
+
+<section id="history" class="history-section" aria-labelledby="history-title">
+    <div class="section-heading">
+        <div><p class="eyebrow">YOUR COLLECTION</p><h2 id="history-title">Recent downloads</h2><p class="section-description">Saved in this browser. Ready when you are.</p></div>
+        <button type="button" class="text-button" @onclick="RefreshHistoryAsync"><span aria-hidden="true">↻</span> Refresh history</button>
+    </div>
+    @if (Session.History.Error is { } historyError) { <div class="notice notice-error" role="alert">@historyError</div> }
+    @if (Session.History.Jobs.Count == 0)
+    {
+        <div class="surface history-empty">
+            <span class="empty-icon" aria-hidden="true">↓</span>
+            <h3>Your collection starts here</h3>
+            <p>Add a video link above. Your recent downloads will appear here.</p>
+        </div>
+    }
+    else
+    {
+        <div class="surface table-wrap">
+            <table class="history-table">
+                <thead><tr><th scope="col">VIDEO</th><th scope="col">FORMAT</th><th scope="col">STATUS</th><th scope="col">CREATED</th><th scope="col"><span class="visually-hidden">Download file</span></th></tr></thead>
+                <tbody>
+                    @foreach (var item in Session.History.Jobs)
+                    {
+                        <tr>
+                            <td><span class="history-title">@(item.VideoTitle ?? item.Id.ToString())</span></td>
+                            <td><span class="format-tag">@item.Format</span><small class="quality-note">@item.Quality</small></td>
+                            <td><span class="status-badge status-@item.Status.ToLowerInvariant()">@item.Status</span></td>
+                            <td class="date-cell">@item.CreatedAt?.ToLocalTime().ToString("MMM d, HH:mm")</td>
+                            <td>@if (Session.History.DownloadUrl(item) is { } url) { <a class="file-link" href="@url" aria-label="Save @(item.VideoTitle ?? "video")">Save file <span aria-hidden="true">↓</span></a> }</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+
+@code {
+    protected override void OnInitialized() => Session.Changed += OnChanged;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) await RefreshHistoryAsync();
+    }
+    private Task RefreshHistoryAsync() => Session.RefreshHistoryAsync(CancellationToken.None);
+    private void OnChanged() => _ = InvokeAsync(StateHasChanged);
+    private Task LoadAsync() => Session.LoadVideoInfoAsync(CancellationToken.None);
+    private Task StartAsync() => Session.StartAsync(CancellationToken.None);
+    private void SelectMp4() => Session.ChangeFormat("Mp4");
+    private void SelectMp3() => Session.ChangeFormat("Mp3");
+    public async ValueTask DisposeAsync()
+    {
+        Session.Changed -= OnChanged;
+        await Session.DisposeAsync();
+    }
+}

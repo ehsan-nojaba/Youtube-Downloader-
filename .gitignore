@@ -1,0 +1,34 @@
+**/bin/
+**/obj/
+.vs/
+*.db
+*.db-shm
+*.db-wal
+downloads/
+temp/
+.tools/
+.preview/
+
+# Local IDE and developer settings
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.idea/
+.vscode/
+**/appsettings.Local.json
+.env
+.env.*
+!.env.example
+
+# Logs, test reports, and archives
+*.log
+*.crdownload
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,34 @@
+@api = http://localhost:5039
+@videoUrl = https://www.youtube.com/watch?v=dQw4w9WgXcQ
+@jobId = 00000000-0000-0000-0000-000000000000
+
+### Health
+GET {{api}}/health
+
+### Metadata and available qualities
+GET {{api}}/api/videos/info?url={{videoUrl}}
+Accept: application/json
+
+### Create a download
+POST {{api}}/api/downloads
+Content-Type: application/json
+
+{
+  "url": "{{videoUrl}}",
+  "format": "Mp3",
+  "quality": "192k"
+}
+
+### Replace jobId above with the returned ID
+GET {{api}}/api/downloads/{{jobId}}
+
+### Download a completed file
+GET {{api}}/api/downloads/{{jobId}}/file
+
+### Browser-local history
+POST {{api}}/api/downloads/history
+Content-Type: application/json
+
+{
+  "jobIds": ["{{jobId}}"]
+}

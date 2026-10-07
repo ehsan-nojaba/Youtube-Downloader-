@@ -1,0 +1,22 @@
+@page "/Error"
+@using System.Diagnostics
+
+<PageTitle>Something went wrong · YtDownloader</PageTitle>
+<section class="surface link-card">
+    <p class="eyebrow">LET'S TRY AGAIN</p>
+    <h1>Something went wrong.</h1>
+    <p class="section-description">Return to the converter and try your request again.</p>
+    <p><a class="action-button" href="/">Back to converter</a></p>
+    @if (!string.IsNullOrEmpty(RequestId))
+    {
+        <p class="field-hint">Reference: @RequestId</p>
+    }
+</section>
+
+@code {
+    [CascadingParameter]
+    private HttpContext? HttpContext { get; set; }
+    private string? RequestId { get; set; }
+    protected override void OnInitialized() =>
+        RequestId = Activity.Current?.Id ?? HttpContext?.TraceIdentifier;
+}
